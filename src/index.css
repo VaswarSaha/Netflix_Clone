@@ -1,0 +1,272 @@
+/* eslint-disable */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Import Netflix Font */
+@import url('https://fonts.cdnfonts.com/css/netflix-sans');
+
+/* Global Styles */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: 'Netflix Sans', 'Helvetica Neue', 'Segoe UI', 'Roboto', 'Ubuntu', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #141414;
+  color: #ffffff;
+  overflow-x: hidden;
+  text-rendering: optimizeLegibility;
+}
+
+input {
+  font-family: 'Netflix Sans', 'Helvetica Neue', 'Segoe UI', 'Roboto', 'Ubuntu', sans-serif;
+}
+
+input:focus {
+  outline: none;
+}
+
+input::placeholder {
+  color: #8c8c8c;
+}
+
+button {
+  transition: all 0.2s ease-in-out;
+  font-family: 'Netflix Sans', 'Helvetica Neue', 'Segoe UI', 'Roboto', 'Ubuntu', sans-serif;
+}
+
+button:focus {
+  outline: none;
+}
+
+img {
+  transition: opacity 0.3s ease-in-out;
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+img[src=""] {
+  opacity: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: #E50914;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:focus-visible,
+input:focus-visible,
+*:focus-visible {
+  outline: 2px solid #E50914;
+  outline-offset: 2px;
+}
+
+/* Hide scrollbar but keep functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Custom scrollbar for main page */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #141414;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #555;
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #777;
+}
+
+/* Line clamp utilities */
+.line-clamp-1 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+  overflow: hidden;
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+}
+
+/* Netflix specific styles */
+.text-netflix-red {
+  color: #E50914;
+}
+
+.bg-netflix-red {
+  background-color: #E50914;
+}
+
+.border-netflix-red {
+  border-color: #E50914;
+}
+
+/* Shadow effects */
+.shadow-netflix {
+  box-shadow: 0 4px 6px -1px rgba(229, 9, 20, 0.3), 0 2px 4px -1px rgba(229, 9, 20, 0.2);
+}
+
+/* Gradient overlays */
+.gradient-overlay-bottom {
+  background: linear-gradient(to bottom, transparent 0%, rgba(20, 20, 20, 0.8) 100%);
+}
+
+.gradient-overlay-left {
+  background: linear-gradient(to right, rgba(20, 20, 20, 0.8) 0%, transparent 100%);
+}
+
+/* Backdrop blur */
+.backdrop-blur-sm {
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+/* Animations */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes spin {
+  to { 
+    transform: rotate(360deg); 
+  }
+}
+
+/* Loading screen */
+#loading-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #141414;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.netflix-loader {
+  width: 60px;
+  height: 60px;
+  border: 5px solid #333;
+  border-top-color: #E50914;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+#loading-screen.hidden {
+  display: none;
+}
+
+/* Hover effects */
+.group\/card {
+  transition: transform 300ms ease-in-out, z-index 0s;
+}
+
+.group\/card:hover {
+  transform: scale(1.05);
+  z-index: 50;
+}
+
+.group\/row:hover .opacity-0 {
+  opacity: 1;
+}
+
+/* Prevent text selection on UI elements */
+button,
+.cursor-pointer {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  body {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 640px) {
+  .scrollbar-hide {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
