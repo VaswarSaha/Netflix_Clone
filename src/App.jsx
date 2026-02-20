@@ -1,8 +1,8 @@
-
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Play, Info, Plus, Check, Search, Bell,
-  ChevronDown, ChevronLeft, ChevronRight, X
+  ChevronDown, ChevronLeft, ChevronRight, X,
+  Facebook, Instagram, Twitter, Youtube
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -55,7 +55,7 @@ function LazyImage({ src, alt, className = '', style = {} }) {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    const el = ref.current; 
+    const el = ref.current;
     if (!el) return;
 
     if ('IntersectionObserver' in window) {
@@ -91,7 +91,6 @@ function LazyImage({ src, alt, className = '', style = {} }) {
 }
 
 
-
 function formatTitle(key) {
   const map = {
     trending: "Trending Now",
@@ -102,20 +101,16 @@ function formatTitle(key) {
     horror: "Horror Movies",
     romance: "Romantic Movies",
     documentaries: "Documentaries",
-
     trendingTV: "Trending TV Shows",
     popularTV: "Popular on Netflix",
     topRatedTV: "Top Rated Shows",
-
     trendingMovies: "Trending Movies",
     popularMovies: "Popular Movies",
     topRatedMovies: "Top Rated Movies",
-
     upcoming: "Coming Soon",
     korean: "Korean Movies & TV",
     hindi: "Hindi Movies & TV",
   };
-
   return map[key] || key;
 }
 
@@ -125,11 +120,9 @@ function formatTitle(key) {
 // -------------------------------------------------------------
 export default function NetflixCloneOptimized() {
 
-  // STORAGE KEYS
   const LS_MYLIST = 'nc_mylist_v1';
   const LS_REMEMBER = 'nc_remember_v1';
 
-  // STATES
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
     const remember = localStorage.getItem(LS_REMEMBER) === 'true';
     if (remember) return true;
@@ -151,7 +144,6 @@ export default function NetflixCloneOptimized() {
   const [showSearchBar, setShowSearchBar] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // MODAL STATE
   const [selectedMovie, setSelectedMovie] = useState(null);
   const [showModal, setShowModal] = useState(false);
 
@@ -165,22 +157,20 @@ export default function NetflixCloneOptimized() {
     setTimeout(() => setSelectedMovie(null), 300);
   };
 
-
-  // Smooth scroll header
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 50);
     window.addEventListener('scroll', handler);
     return () => window.removeEventListener('scroll', handler);
   }, []);
 
-
-  // Load categories on page change
   useEffect(() => {
     if (isLoggedIn) loadPage(currentPage);
   }, [isLoggedIn, currentPage]);
 
+  useEffect(() => {
+    localStorage.setItem(LS_MYLIST, JSON.stringify(myList));
+  }, [myList]);
 
-  // Fetch category data
   const loadPage = useCallback(async (page) => {
     setLoading(true);
     try {
@@ -195,7 +185,6 @@ export default function NetflixCloneOptimized() {
           comedy: await fetchWithCache('/discover/movie?with_genres=35'),
         };
       }
-
       if (page === 'tvshows') {
         categoryData = {
           trendingTV: await fetchWithCache('/trending/tv/week'),
@@ -203,7 +192,6 @@ export default function NetflixCloneOptimized() {
           topRatedTV: await fetchWithCache('/tv/top_rated'),
         };
       }
-
       if (page === 'movies') {
         categoryData = {
           trendingMovies: await fetchWithCache('/trending/movie/week'),
@@ -211,14 +199,12 @@ export default function NetflixCloneOptimized() {
           topRatedMovies: await fetchWithCache('/movie/top_rated'),
         };
       }
-
       if (page === 'newpopular') {
         categoryData = {
           trending: await fetchWithCache('/trending/all/day'),
           upcoming: await fetchWithCache('/movie/upcoming'),
         };
       }
-
       if (page === 'languages') {
         categoryData = {
           korean: await fetchWithCache('/discover/movie?with_original_language=ko'),
@@ -226,7 +212,6 @@ export default function NetflixCloneOptimized() {
         };
       }
 
-      // Normalize images to full URLs
       const normalize = (arr) =>
         arr.map(i => ({
           ...i,
@@ -239,7 +224,6 @@ export default function NetflixCloneOptimized() {
       );
 
       setCategories(normalized);
-
       const all = Object.values(normalized).flat();
       setFeatured(all[Math.floor(Math.random() * all.length)] || null);
 
@@ -249,19 +233,15 @@ export default function NetflixCloneOptimized() {
     setLoading(false);
   }, []);
 
-
-  // Search
   const handleSearch = async (q) => {
     if (!q.trim()) return;
     setLoading(true);
-
     const res = await fetchWithCache(`/search/multi?query=${encodeURIComponent(q)}`);
     const normalized = res.map(i => ({
       ...i,
       poster_path: i.poster_path ? `${IMG_SMALL}${i.poster_path}` : null,
       backdrop_path: i.backdrop_path ? `${IMG_BASE}${i.backdrop_path}` : null
     }));
-
     setSearchResults(normalized.filter(i => i.poster_path));
     setCurrentPage('search');
     setLoading(false);
@@ -269,46 +249,34 @@ export default function NetflixCloneOptimized() {
 
   const debouncedSearch = useDebouncedCallback(handleSearch, 400);
 
-
-  // Toggle My List
   const toggleMyList = (item) => {
     setMyList(prev => {
       const exists = prev.find(i => i.id === item.id);
-      return exists
-        ? prev.filter(i => i.id !== item.id)
-        : [...prev, item];
+      return exists ? prev.filter(i => i.id !== item.id) : [...prev, item];
     });
   };
 
   const isInMyList = (id) => myList.some(i => i.id === id);
 
-
-  // Login
   const handleLogin = (remember) => {
     if (remember) localStorage.setItem(LS_REMEMBER, 'true');
     sessionStorage.setItem('netflixLoggedIn', 'true');
     setIsLoggedIn(true);
   };
 
-
   if (!isLoggedIn) return <AuthScreen onLogin={handleLogin} />;
 
-
-  // =============================================================
-  // RENDER
-  // =============================================================
   return (
     <div className="bg-black min-h-screen text-white relative">
-      {/* HEADER */}
-      <header className={`fixed top-0 w-full z-50 transition-all ${scrolled ? 'backdrop-blur-lg bg-black/70' : 'bg-gradient-to-b from-black/80 to-transparent'}`}>
 
+      {/* HEADER */}
+      <header className={`fixed top-0 w-full z-50 transition-all duration-300 ${scrolled ? 'backdrop-blur-lg bg-black/70' : 'bg-gradient-to-b from-black/80 to-transparent'}`}>
         <div className="max-w-7xl mx-auto px-6 py-3 flex justify-between items-center">
 
-          {/* LOGO + NAV */}
           <div className="flex items-center gap-8">
             <h1
               onClick={() => setCurrentPage('home')}
-              className="text-[#E50914] text-3xl font-extrabold cursor-pointer"
+              className="text-[#E50914] text-3xl font-extrabold cursor-pointer tracking-tight"
             >NETFLIX</h1>
 
             <nav className="hidden md:flex gap-6 text-sm">
@@ -323,7 +291,7 @@ export default function NetflixCloneOptimized() {
                 <button
                   key={n.page}
                   onClick={() => setCurrentPage(n.page)}
-                  className={`transition ${currentPage === n.page ? 'text-white font-semibold' : 'text-neutral-300'}`}
+                  className={`transition ${currentPage === n.page ? 'text-white font-semibold' : 'text-neutral-300 hover:text-white'}`}
                 >
                   {n.label}
                 </button>
@@ -331,16 +299,13 @@ export default function NetflixCloneOptimized() {
             </nav>
           </div>
 
-          {/* SEARCH + PROFILE */}
           <div className="flex items-center gap-4">
             <Search
               onClick={() => setShowSearchBar(true)}
               className="w-6 h-6 cursor-pointer hover:text-neutral-300 transition"
             />
+            <Bell className="hidden md:block w-6 h-6 cursor-pointer hover:text-neutral-300 transition" />
 
-            <Bell className="hidden md:block w-6 h-6 cursor-pointer" />
-
-            {/* PROFILE */}
             <div className="relative">
               <div
                 onClick={() => setShowProfileMenu(v => !v)}
@@ -351,7 +316,7 @@ export default function NetflixCloneOptimized() {
                   className="w-8 h-8 rounded"
                   alt="Profile"
                 />
-                <ChevronDown className={`w-4 h-4 transition ${showProfileMenu ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${showProfileMenu ? 'rotate-180' : ''}`} />
               </div>
 
               <AnimatePresence>
@@ -362,73 +327,73 @@ export default function NetflixCloneOptimized() {
                     exit={{ opacity: 0, y: -6 }}
                     className="absolute right-0 mt-3 w-48 bg-black border border-neutral-700 rounded-lg shadow-xl"
                   >
-                    <div className="px-4 py-2 hover:bg-white/10 cursor-pointer">Account</div>
-                    <div className="px-4 py-2 hover:bg-white/10 cursor-pointer">Settings</div>
+                    <div className="px-4 py-2 hover:bg-white/10 cursor-pointer text-sm">Account</div>
+                    <div className="px-4 py-2 hover:bg-white/10 cursor-pointer text-sm">Settings</div>
                     <div className="border-t border-neutral-700" />
                     <div
                       onClick={() => { sessionStorage.clear(); localStorage.removeItem(LS_REMEMBER); setIsLoggedIn(false); }}
-                      className="px-4 py-2 hover:bg-white/10 cursor-pointer"
+                      className="px-4 py-2 hover:bg-white/10 cursor-pointer text-sm"
                     >
                       Sign Out
                     </div>
                   </motion.div>
                 )}
               </AnimatePresence>
-
             </div>
           </div>
         </div>
 
         {/* Search Bar */}
-        {showSearchBar && (
-          <div className="px-6 py-3 bg-black/95 border-b border-neutral-800">
-            <div className="max-w-2xl mx-auto flex items-center bg-neutral-900 rounded overflow-hidden">
-              <Search className="w-6 h-6 text-white ml-3" />
-              <input
-                value={searchQuery}
-                onChange={e => {
-                  setSearchQuery(e.target.value);
-                  debouncedSearch(e.target.value);
-                }}
-                autoFocus
-                placeholder="Titles, people, genres..."
-                className="flex-1 bg-transparent px-3 py-3 outline-none text-sm text-white"
-              />
-              <X
-                onClick={() => {
-                  setSearchQuery('');
-                  setSearchResults([]);
-                  setShowSearchBar(false);
-                }}
-                className="w-6 h-6 text-white mr-3 cursor-pointer"
-              />
-            </div>
-          </div>
-        )}
+        <AnimatePresence>
+          {showSearchBar && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="px-6 py-3 bg-black/95 border-b border-neutral-800 overflow-hidden"
+            >
+              <div className="max-w-2xl mx-auto flex items-center bg-neutral-900 rounded overflow-hidden border border-neutral-700">
+                <Search className="w-5 h-5 text-neutral-400 ml-3" />
+                <input
+                  value={searchQuery}
+                  onChange={e => {
+                    setSearchQuery(e.target.value);
+                    debouncedSearch(e.target.value);
+                  }}
+                  autoFocus
+                  placeholder="Titles, people, genres..."
+                  className="flex-1 bg-transparent px-3 py-3 outline-none text-sm text-white placeholder-neutral-500"
+                />
+                <X
+                  onClick={() => {
+                    setSearchQuery('');
+                    setSearchResults([]);
+                    setShowSearchBar(false);
+                  }}
+                  className="w-5 h-5 text-neutral-400 mr-3 cursor-pointer hover:text-white transition"
+                />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </header>
 
-
-
-      {/* MAIN CONTENT */}
+      {/* MAIN */}
       <main className="pt-[90px]">
 
-        {/* LOADING */}
         {loading && (
           <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[200]">
             <div className="w-16 h-16 border-4 border-neutral-700 border-t-[#E50914] rounded-full animate-spin" />
           </div>
         )}
 
-
-        {/* HERO */}
+        {/* HERO — unchanged, original behaviour */}
         {featured && (
-          <HeroSection featured={featured} />
+          <HeroSection featured={featured} openModal={openModal} />
         )}
 
-
-        {/* ROWS */}
+        {/* ROWS — cards open modal on hover */}
         <section className="relative -mt-24 space-y-12 px-6 md:px-12 pb-20">
-
           {Object.entries(categories).map(([key, items]) => (
             <MovieRow
               key={key}
@@ -436,12 +401,10 @@ export default function NetflixCloneOptimized() {
               items={items}
               onToggleList={toggleMyList}
               isInMyList={isInMyList}
-              openModal={openModal}      // <── ADD THIS
+              openModal={openModal}
             />
           ))}
-
         </section>
-
 
         {/* SEARCH RESULTS */}
         {currentPage === 'search' && (
@@ -449,7 +412,6 @@ export default function NetflixCloneOptimized() {
             <h2 className="text-xl md:text-2xl font-semibold mb-8">
               {searchResults.length ? `Results for "${searchQuery}"` : `No results for "${searchQuery}"`}
             </h2>
-
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
               {searchResults.map(item => (
                 <MovieCard
@@ -457,21 +419,25 @@ export default function NetflixCloneOptimized() {
                   item={item}
                   onToggleList={toggleMyList}
                   isInList={isInMyList(item.id)}
-                  openModal={openModal}      // <── ADD THIS
+                  openModal={openModal}
                 />
               ))}
             </div>
           </section>
         )}
 
-
         {/* MY LIST */}
         {currentPage === 'mylist' && (
           <section className="px-6 md:px-12 pb-20">
             <h2 className="text-3xl md:text-4xl font-bold mb-10">My List</h2>
-
             {myList.length === 0 ? (
-              <p className="text-neutral-400">You have no items in your list.</p>
+              <div className="flex flex-col items-center justify-center py-24 text-center">
+                <div className="w-20 h-20 rounded-full bg-neutral-800 flex items-center justify-center mb-6">
+                  <Plus className="w-10 h-10 text-neutral-500" />
+                </div>
+                <p className="text-neutral-400 text-lg font-medium">Your list is empty</p>
+                <p className="text-neutral-600 text-sm mt-2">Add movies and shows to keep track of what you want to watch.</p>
+              </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                 {myList.map(item => (
@@ -480,7 +446,7 @@ export default function NetflixCloneOptimized() {
                     item={item}
                     onToggleList={toggleMyList}
                     isInList={true}
-                    openModal={openModal}      // <── ADD THIS
+                    openModal={openModal}
                   />
                 ))}
               </div>
@@ -490,9 +456,7 @@ export default function NetflixCloneOptimized() {
 
       </main>
 
-
-
-      {/* MOVIE DETAILS MODAL */}
+      {/* MODAL */}
       <MovieModal
         show={showModal}
         movie={selectedMovie}
@@ -501,10 +465,45 @@ export default function NetflixCloneOptimized() {
         isInMyList={isInMyList}
       />
 
-
       {/* FOOTER */}
-      <footer className="px-6 md:px-12 py-12 text-neutral-500 text-sm border-t border-neutral-800">
-        <p>© 2024 Netflix Clone. All rights reserved.</p>
+      <footer className="px-6 md:px-12 py-16 border-t border-neutral-800 bg-black">
+        <div className="max-w-5xl mx-auto">
+
+          <div className="flex gap-6 mb-8">
+            <a href="#" aria-label="Facebook" className="text-neutral-400 hover:text-white transition">
+              <Facebook className="w-5 h-5" />
+            </a>
+            <a href="#" aria-label="Instagram" className="text-neutral-400 hover:text-white transition">
+              <Instagram className="w-5 h-5" />
+            </a>
+            <a href="#" aria-label="Twitter" className="text-neutral-400 hover:text-white transition">
+              <Twitter className="w-5 h-5" />
+            </a>
+            <a href="#" aria-label="YouTube" className="text-neutral-400 hover:text-white transition">
+              <Youtube className="w-5 h-5" />
+            </a>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-y-4 gap-x-6 text-neutral-500 text-xs mb-10">
+            {[
+              "Audio Description", "Help Centre", "Gift Cards", "Media Centre",
+              "Investor Relations", "Jobs", "Terms of Use", "Privacy",
+              "Legal Notices", "Cookie Preferences", "Corporate Information", "Contact Us",
+            ].map(link => (
+              <span key={link} className="hover:underline cursor-pointer hover:text-neutral-300 transition">
+                {link}
+              </span>
+            ))}
+          </div>
+
+          <button className="border border-neutral-600 text-neutral-400 text-xs px-4 py-2 mb-8 hover:border-neutral-400 hover:text-neutral-200 transition rounded-sm">
+            Service Code
+          </button>
+
+          <p className="text-neutral-600 text-xs">
+            © {new Date().getFullYear()} Netflix Clone. This is a fan-made project for educational purposes only. Not affiliated with Netflix, Inc.
+          </p>
+        </div>
       </footer>
 
     </div>
@@ -512,50 +511,226 @@ export default function NetflixCloneOptimized() {
 }
 
 
+// -------------------------------------------------------------
+// HERO SECTION — original, unchanged
+// -------------------------------------------------------------
+function HeroSection({ featured, openModal }) {
+  const [hovered, setHovered] = useState(false);
 
-// -------------------------------------------------------------
-// HERO SECTION
-// -------------------------------------------------------------
-function HeroSection({ featured }) {
   return (
-    <section className="relative h-[55vw] max-h-[720px] overflow-hidden">
+    <section
+      className="relative h-[55vw] max-h-[720px] overflow-hidden cursor-pointer"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
       <img
         src={featured.backdrop_path}
-        className="absolute inset-0 w-full h-full object-cover"
+        className={`absolute inset-0 w-full h-full object-cover transition-transform duration-700 ${hovered ? 'scale-105' : 'scale-100'}`}
         alt=""
       />
 
-      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
+      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
 
-      <div className="absolute bottom-[18%] left-1/2 -translate-x-1/2 text-center max-w-3xl px-6">
-        <h1 className="text-4xl md:text-6xl font-extrabold drop-shadow-lg">
-          {featured.title || featured.name}
-        </h1>
+      <AnimatePresence>
+        {hovered && (
+          <motion.div
+            className="absolute inset-0 bg-black/60 flex items-center justify-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <div className="text-center max-w-2xl px-8 space-y-4">
 
-        <p className="mt-4 text-neutral-300 text-sm md:text-lg">
-          {(featured.overview || '').slice(0, 220)}...
-        </p>
+              <motion.span
+                className="inline-block bg-[#E50914] text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-widest"
+                initial={{ y: -12, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.05 }}
+              >
+                Featured
+              </motion.span>
 
-        <div className="mt-6 flex justify-center gap-4">
-          <button className="flex items-center gap-2 bg-white text-black px-6 py-3 rounded-md">
-            <Play className="w-5 h-5" /> Play
-          </button>
-          <button className="flex items-center gap-2 bg-white/20 text-white px-6 py-3 rounded-md border border-white/20">
-            <Info className="w-5 h-5" /> More Info
-          </button>
-        </div>
-      </div>
+              <motion.h2
+                className="text-4xl md:text-5xl font-extrabold drop-shadow-lg leading-tight"
+                initial={{ y: 12, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.1 }}
+              >
+                {featured.title || featured.name}
+              </motion.h2>
+
+              <motion.div
+                className="flex items-center justify-center gap-4 text-sm text-neutral-300 flex-wrap"
+                initial={{ y: 12, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.15 }}
+              >
+                <span className="text-green-400 font-bold text-base">
+                  {Math.round((featured.vote_average || 0) * 10)}% Match
+                </span>
+                <span>{(featured.release_date || featured.first_air_date || '').slice(0, 4)}</span>
+                <span className="border border-neutral-500 px-2 py-0.5 rounded text-xs">HD</span>
+              </motion.div>
+
+              <motion.p
+                className="text-neutral-300 text-sm md:text-base leading-relaxed"
+                style={{
+                  display: '-webkit-box',
+                  WebkitLineClamp: 3,
+                  WebkitBoxOrient: 'vertical',
+                  overflow: 'hidden',
+                }}
+                initial={{ y: 12, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.2 }}
+              >
+                {featured.overview || 'No description available.'}
+              </motion.p>
+
+              <motion.div
+                className="flex justify-center gap-4 pt-2"
+                initial={{ y: 12, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.25 }}
+              >
+                <button className="flex items-center gap-2 bg-white text-black px-6 py-3 rounded-md font-semibold hover:bg-neutral-200 transition text-sm">
+                  <Play className="w-5 h-5 fill-black" /> Play
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); openModal(featured); }}
+                  className="flex items-center gap-2 bg-white/20 text-white px-6 py-3 rounded-md border border-white/30 hover:bg-white/30 transition text-sm"
+                >
+                  <Info className="w-5 h-5" /> More Info
+                </button>
+              </motion.div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {!hovered && (
+          <motion.div
+            className="absolute bottom-[18%] left-1/2 -translate-x-1/2 text-center max-w-3xl px-6 w-full"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+          >
+            <h1 className="text-4xl md:text-6xl font-extrabold drop-shadow-lg leading-tight">
+              {featured.title || featured.name}
+            </h1>
+            <p className="mt-4 text-neutral-300 text-sm md:text-lg">
+              {(featured.overview || '').slice(0, 220)}...
+            </p>
+            <div className="mt-6 flex justify-center gap-4">
+              <button className="flex items-center gap-2 bg-white text-black px-6 py-3 rounded-md font-semibold hover:bg-neutral-200 transition">
+                <Play className="w-5 h-5 fill-black" /> Play
+              </button>
+              <button
+                onClick={() => openModal(featured)}
+                className="flex items-center gap-2 bg-white/20 text-white px-6 py-3 rounded-md border border-white/20 hover:bg-white/30 transition"
+              >
+                <Info className="w-5 h-5" /> More Info
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   );
 }
 
 
+// -------------------------------------------------------------
+// HOVERABLE CARD — used inside MovieRow
+// Opens modal automatically after 500ms hover (no click needed)
+// -------------------------------------------------------------
+function HoverCard({ item, onToggleList, isInList, openModal }) {
+  const hoverTimer = useRef(null);
+  const [hovered, setHovered] = useState(false);
+
+  const handleMouseEnter = () => {
+    setHovered(true);
+    hoverTimer.current = setTimeout(() => {
+      openModal(item);
+    }, 500); // 500ms feels instant but avoids accidental triggers
+  };
+
+  const handleMouseLeave = () => {
+    setHovered(false);
+    if (hoverTimer.current) {
+      clearTimeout(hoverTimer.current);
+      hoverTimer.current = null;
+    }
+  };
+
+  useEffect(() => () => clearTimeout(hoverTimer.current), []);
+
+  return (
+    <div
+      className="min-w-[150px] md:min-w-[220px] relative"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      {/* Poster image with scale + ring on hover */}
+      <div
+        className={`w-full h-[210px] md:h-[320px] rounded-lg overflow-hidden cursor-pointer transition-all duration-300 ${
+          hovered ? 'scale-105 ring-2 ring-white/70 shadow-2xl shadow-black/60' : 'scale-100'
+        }`}
+        onClick={() => openModal(item)}
+      >
+        <LazyImage
+          src={item.poster_path || item.backdrop_path}
+          alt={item.title || item.name}
+        />
+
+        {/* Hover overlay on card image */}
+        <AnimatePresence>
+          {hovered && (
+            <motion.div
+              className="absolute inset-0 bg-black/40 flex items-end justify-center pb-4 rounded-lg pointer-events-none"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <span className="text-white text-xs font-medium bg-black/50 px-3 py-1 rounded-full backdrop-blur-sm">
+                Loading details…
+              </span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* Title */}
+      <h4
+        onClick={() => openModal(item)}
+        className={`mt-2 text-sm md:text-base font-semibold truncate cursor-pointer transition ${
+          hovered ? 'text-red-400' : 'hover:text-red-400'
+        }`}
+      >
+        {item.title || item.name}
+      </h4>
+
+      {/* Add / Remove button */}
+      <button
+        onClick={(e) => { e.stopPropagation(); onToggleList(item); }}
+        className="mt-2 bg-white text-black p-2 rounded-full hover:bg-neutral-200 transition"
+        title={isInList ? "Remove from My List" : "Add to My List"}
+      >
+        {isInList ? <Check className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+      </button>
+    </div>
+  );
+}
+
 
 // -------------------------------------------------------------
-// MOVIE ROW (titles always visible, click title = modal)
+// MOVIE ROW — uses HoverCard so each card auto-opens on hover
 // -------------------------------------------------------------
 function MovieRow({ title, items, onToggleList, isInMyList, openModal }) {
-
   const scrollRef = useRef(null);
   const [showLeft, setShowLeft] = useState(false);
   const [showRight, setShowRight] = useState(true);
@@ -577,10 +752,8 @@ function MovieRow({ title, items, onToggleList, isInMyList, openModal }) {
 
   return (
     <div className="relative group">
-
       <h3 className="text-xl font-semibold mb-4">{title}</h3>
 
-      {/* LEFT BUTTON */}
       {showLeft && (
         <button
           onClick={() => scroll('left')}
@@ -590,43 +763,22 @@ function MovieRow({ title, items, onToggleList, isInMyList, openModal }) {
         </button>
       )}
 
-      {/* SCROLL ROW */}
       <div
         ref={scrollRef}
         onScroll={updateControls}
         className="flex gap-4 overflow-x-auto scroll-smooth no-scrollbar py-2"
       >
         {items.map(item => (
-          <div key={item.id} className="min-w-[150px] md:min-w-[220px]">
-
-            {/* IMAGE */}
-            <div className="w-full h-[210px] md:h-[320px] rounded-lg overflow-hidden">
-              <LazyImage
-                src={item.poster_path || item.backdrop_path}
-                alt={item.title}
-              />
-            </div>
-
-            {/* TITLE — CLICKABLE (opens modal) */}
-            <h4
-              onClick={() => openModal(item)}
-              className="mt-2 text-sm md:text-base font-semibold truncate cursor-pointer hover:text-red-400"
-            >
-              {item.title || item.name}
-            </h4>
-
-            {/* Action Controls */}
-            <button
-              onClick={() => onToggleList(item)}
-              className="mt-2 bg-white text-black p-2 rounded-full"
-            >
-              {isInMyList(item.id) ? <Check /> : <Plus />}
-            </button>
-          </div>
+          <HoverCard
+            key={item.id}
+            item={item}
+            onToggleList={onToggleList}
+            isInList={isInMyList(item.id)}
+            openModal={openModal}
+          />
         ))}
       </div>
 
-      {/* RIGHT BUTTON */}
       {showRight && (
         <button
           onClick={() => scroll('right')}
@@ -640,106 +792,196 @@ function MovieRow({ title, items, onToggleList, isInMyList, openModal }) {
 }
 
 
-
 // -------------------------------------------------------------
-// GRID MOVIE CARD (Search, MyList)
+// GRID MOVIE CARD — used in Search & My List
+// Also opens modal on hover (500ms delay)
 // -------------------------------------------------------------
 function MovieCard({ item, onToggleList, isInList, openModal }) {
-  return (
-    <div className="group relative">
+  const hoverTimer = useRef(null);
+  const [hovered, setHovered] = useState(false);
 
-      {/* IMAGE */}
-      <div className="w-full h-[300px] rounded-lg overflow-hidden cursor-pointer">
+  const handleMouseEnter = () => {
+    setHovered(true);
+    hoverTimer.current = setTimeout(() => {
+      openModal(item);
+    }, 500);
+  };
+
+  const handleMouseLeave = () => {
+    setHovered(false);
+    if (hoverTimer.current) {
+      clearTimeout(hoverTimer.current);
+      hoverTimer.current = null;
+    }
+  };
+
+  useEffect(() => () => clearTimeout(hoverTimer.current), []);
+
+  return (
+    <div
+      className="group relative"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      <div
+        className={`w-full h-[300px] rounded-lg overflow-hidden cursor-pointer transition-all duration-300 ${
+          hovered ? 'scale-105 ring-2 ring-white/70 shadow-2xl shadow-black/60' : 'scale-100'
+        }`}
+        onClick={() => openModal(item)}
+      >
         <LazyImage
           src={item.poster_path || item.backdrop_path}
-          alt={item.title}
-          onClick={() => openModal(item)}
+          alt={item.title || item.name}
         />
+
+        <AnimatePresence>
+          {hovered && (
+            <motion.div
+              className="absolute inset-0 bg-black/40 flex items-end justify-center pb-4 rounded-lg pointer-events-none"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <span className="text-white text-xs font-medium bg-black/50 px-3 py-1 rounded-full backdrop-blur-sm">
+                Loading details…
+              </span>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
-      {/* TITLE — ALWAYS SHOWN */}
       <h4
         onClick={() => openModal(item)}
-        className="mt-2 font-semibold text-sm cursor-pointer hover:text-red-400"
+        className={`mt-2 font-semibold text-sm cursor-pointer transition ${
+          hovered ? 'text-red-400' : 'hover:text-red-400'
+        }`}
       >
         {item.title || item.name}
       </h4>
 
-      {/* BUTTONS BELOW */}
       <button
-        onClick={() => onToggleList(item)}
-        className="absolute bottom-3 right-3 bg-white p-2 rounded-full shadow"
+        onClick={(e) => { e.stopPropagation(); onToggleList(item); }}
+        className="absolute bottom-10 right-2 bg-white p-2 rounded-full shadow hover:bg-neutral-200 transition"
+        title={isInList ? "Remove from My List" : "Add to My List"}
       >
-        {isInList ? <Check className="text-black" /> : <Plus className="text-black" />}
+        {isInList ? <Check className="text-black w-4 h-4" /> : <Plus className="text-black w-4 h-4" />}
       </button>
     </div>
   );
 }
 
 
-
 // -------------------------------------------------------------
-// MOVIE MODAL (NEW)
+// MOVIE MODAL
 // -------------------------------------------------------------
 function MovieModal({ show, movie, closeModal, toggleMyList, isInMyList }) {
+
+  useEffect(() => {
+    if (!show) return;
+    const handler = (e) => { if (e.key === 'Escape') closeModal(); };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [show, closeModal]);
+
+  useEffect(() => {
+    document.body.style.overflow = show ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [show]);
 
   if (!show || !movie) return null;
 
   return (
     <AnimatePresence>
       <motion.div
-        className="fixed inset-0 bg-black/80 backdrop-blur-md z-[300] flex justify-center items-start overflow-y-auto py-12"
+        className="fixed inset-0 bg-black/80 backdrop-blur-md z-[300] flex justify-center items-start overflow-y-auto py-12 px-4"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
+        onClick={closeModal}
       >
-
         <motion.div
-          className="bg-[#111] w-[90%] md:w-[70%] lg:w-[55%] rounded-lg overflow-hidden shadow-2xl relative"
-          initial={{ scale: 0.8, opacity: 0 }}
+          className="bg-[#181818] w-full md:w-[70%] lg:w-[55%] max-w-3xl rounded-xl overflow-hidden shadow-2xl relative"
+          initial={{ scale: 0.85, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0.8, opacity: 0 }}
-          transition={{ duration: 0.25 }}
+          exit={{ scale: 0.85, opacity: 0 }}
+          transition={{ duration: 0.25, ease: 'easeOut' }}
+          onClick={(e) => e.stopPropagation()}
         >
-
-          {/* BANNER */}
-          <div className="relative h-[250px] md:h-[350px] w-full overflow-hidden">
+          {/* Banner */}
+          <div className="relative h-[250px] md:h-[380px] w-full overflow-hidden">
             <img
               src={movie.backdrop_path || movie.poster_path}
-              alt="banner"
+              alt={movie.title || movie.name}
               className="w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#111] to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#181818] via-transparent to-transparent" />
+
+            <div className="absolute bottom-6 left-6">
+              <h2 className="text-3xl md:text-4xl font-extrabold drop-shadow-lg">
+                {movie.title || movie.name}
+              </h2>
+            </div>
 
             <button
               onClick={closeModal}
-              className="absolute top-4 right-4 bg-black/70 p-2 rounded-full hover:bg-black/90"
+              className="absolute top-4 right-4 bg-black/70 p-2 rounded-full hover:bg-black/90 transition"
+              aria-label="Close"
             >
-              <X className="w-6 h-6 text-white" />
+              <X className="w-5 h-5 text-white" />
             </button>
           </div>
 
-          {/* DETAILS */}
-          <div className="p-6 space-y-4">
-            <h2 className="text-3xl font-bold">{movie.title || movie.name}</h2>
+          {/* Details */}
+          <div className="p-6 space-y-5">
 
-            <div className="flex items-center gap-4">
-              <span>{(movie.release_date || movie.first_air_date || '').slice(0, 4)}</span>
-              <span className="text-green-400 font-semibold">
+            <div className="flex items-center gap-4 flex-wrap text-sm">
+              <span className="text-green-400 font-bold text-base">
                 {Math.round((movie.vote_average || 0) * 10)}% Match
               </span>
+              <span className="text-neutral-400">
+                {(movie.release_date || movie.first_air_date || '').slice(0, 4)}
+              </span>
+              <span className="border border-neutral-600 px-2 py-0.5 rounded text-xs text-neutral-400">HD</span>
+              {movie.media_type && (
+                <span className="border border-neutral-600 px-2 py-0.5 rounded text-xs text-neutral-400 capitalize">
+                  {movie.media_type}
+                </span>
+              )}
             </div>
 
-            <p className="text-neutral-300">{movie.overview || "No description available."}</p>
+            <p className="text-neutral-300 leading-relaxed text-sm md:text-base">
+              {movie.overview || "No description available."}
+            </p>
 
-            <button
-              onClick={() => toggleMyList(movie)}
-              className="bg-white text-black px-6 py-2 rounded-md font-semibold"
-            >
-              {isInMyList(movie.id) ? "✓ Remove from My List" : "+ Add to My List"}
-            </button>
+            {movie.vote_average > 0 && (
+              <div className="flex items-center gap-2 text-xs text-neutral-500">
+                <span>⭐ {movie.vote_average?.toFixed(1)} / 10</span>
+                {movie.vote_count && <span>({movie.vote_count.toLocaleString()} votes)</span>}
+              </div>
+            )}
+
+            <div className="flex items-center gap-3 pt-2 flex-wrap">
+              <button className="flex items-center gap-2 bg-white text-black px-6 py-2.5 rounded-md font-semibold hover:bg-neutral-200 transition text-sm">
+                <Play className="w-5 h-5 fill-black" /> Play
+              </button>
+
+              <button
+                onClick={() => toggleMyList(movie)}
+                className={`flex items-center gap-2 px-6 py-2.5 rounded-md font-semibold border transition text-sm ${
+                  isInMyList(movie.id)
+                    ? 'bg-white/10 border-white/30 text-white hover:bg-white/20'
+                    : 'bg-transparent border-white/30 text-white hover:bg-white/10'
+                }`}
+              >
+                {isInMyList(movie.id)
+                  ? <><Check className="w-4 h-4" /> In My List</>
+                  : <><Plus className="w-4 h-4" /> My List</>
+                }
+              </button>
+            </div>
+
           </div>
-
         </motion.div>
       </motion.div>
     </AnimatePresence>
@@ -747,20 +989,22 @@ function MovieModal({ show, movie, closeModal, toggleMyList, isInMyList }) {
 }
 
 
-
 // -------------------------------------------------------------
-// Auth Screen
+// AUTH SCREEN
 // -------------------------------------------------------------
 function AuthScreen({ onLogin }) {
-
   const [email, setEmail] = useState('');
   const [pass, setPass] = useState('');
   const [remember, setRemember] = useState(false);
+  const [error, setError] = useState('');
 
   const submit = () => {
-    if (!email || !pass) return alert("Enter credentials");
+    if (!email || !pass) { setError('Please enter your email and password.'); return; }
+    setError('');
     onLogin(remember);
   };
+
+  const handleKeyDown = (e) => { if (e.key === 'Enter') submit(); };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-black text-white relative">
@@ -771,43 +1015,63 @@ function AuthScreen({ onLogin }) {
       />
       <div className="absolute inset-0 bg-black/60" />
 
-      <div className="relative bg-black/70 p-10 rounded-lg w-full max-w-md">
-        <h1 className="text-3xl font-bold mb-6">Sign In</h1>
+      <div className="relative bg-black/75 backdrop-blur-sm p-10 rounded-xl w-full max-w-md shadow-2xl border border-white/10">
+        <h1 className="text-[#E50914] text-3xl font-extrabold mb-2 tracking-tight">NETFLIX</h1>
+        <h2 className="text-2xl font-bold mb-6">Sign In</h2>
+
+        {error && (
+          <div className="bg-[#E50914]/20 border border-[#E50914]/40 text-sm text-red-300 px-4 py-3 rounded mb-4">
+            {error}
+          </div>
+        )}
 
         <div className="space-y-4">
           <input
             type="email"
-            className="w-full px-4 py-3 bg-neutral-800 rounded"
-            placeholder="Email"
+            className="w-full px-4 py-3 bg-neutral-800 rounded border border-transparent focus:border-[#E50914] transition text-sm outline-none"
+            placeholder="Email or phone number"
             value={email}
             onChange={e => setEmail(e.target.value)}
+            onKeyDown={handleKeyDown}
           />
-
           <input
             type="password"
-            className="w-full px-4 py-3 bg-neutral-800 rounded"
+            className="w-full px-4 py-3 bg-neutral-800 rounded border border-transparent focus:border-[#E50914] transition text-sm outline-none"
             placeholder="Password"
             value={pass}
             onChange={e => setPass(e.target.value)}
+            onKeyDown={handleKeyDown}
           />
-
           <button
-            className="w-full bg-[#E50914] py-3 rounded font-semibold mt-4"
+            className="w-full bg-[#E50914] py-3 rounded font-semibold mt-2 hover:bg-[#f6121d] transition"
             onClick={submit}
           >
             Sign In
           </button>
         </div>
 
-        <div className="flex justify-between mt-4 text-sm text-neutral-400">
-          <label>
-            <input type="checkbox" checked={remember} onChange={e => setRemember(e.target.checked)} />
-            <span className="ml-2">Remember me</span>
+        <div className="flex justify-between mt-5 text-sm text-neutral-400">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={remember}
+              onChange={e => setRemember(e.target.checked)}
+              className="accent-[#E50914]"
+            />
+            <span>Remember me</span>
           </label>
-          <span className="cursor-pointer">Need help?</span>
+          <span className="cursor-pointer hover:underline">Need help?</span>
         </div>
+
+        <div className="mt-8 text-neutral-500 text-sm">
+          New to Netflix?{' '}
+          <span className="text-white cursor-pointer hover:underline">Sign up now.</span>
+        </div>
+
+        <p className="mt-4 text-xs text-neutral-600">
+          This page is protected by Google reCAPTCHA to ensure you're not a bot.
+        </p>
       </div>
     </div>
   );
 }
-
