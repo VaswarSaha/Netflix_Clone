@@ -174,12 +174,7 @@ export default function NetflixCloneOptimized() {
     return () => window.removeEventListener("scroll", handler);
   }, []);
 
-  useEffect(() => {
-    if (isLoggedIn) {
-      loadPage(currentPage);
-    }
-  // eslint-disable-next-line no-use-before-define
-  }, [isLoggedIn, currentPage, loadPage]);
+ 
 
   useEffect(() => {
     localStorage.setItem(LS_MYLIST, JSON.stringify(myList));
@@ -253,6 +248,14 @@ export default function NetflixCloneOptimized() {
     }
     setLoading(false);
   }, []);
+
+  
+useEffect(() => {
+  if (isLoggedIn) {
+    loadPage(currentPage);
+  }
+}, [isLoggedIn, currentPage, loadPage]);
+
 
   const handleSearch = async (q) => {
     if (!q.trim()) return;
