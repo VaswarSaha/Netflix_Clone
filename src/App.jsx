@@ -1,56 +1,67 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
-  Play, Info, Plus, Check, Search, Bell,
-  ChevronDown, ChevronLeft, ChevronRight, X,
-  Facebook, Instagram, Twitter, Youtube
-} from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+  Play,
+  Info,
+  Plus,
+  Check,
+  Search,
+  Bell,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  X,
+  Facebook,
+  Instagram,
+  Twitter,
+  Youtube,
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 // Replace with your API key:
-const API_KEY = 'e950e51d5d49e85f7c2f17f01eb23ba3';
-const BASE_URL = 'https://api.themoviedb.org/3';
-const IMG_BASE = 'https://image.tmdb.org/t/p/original';
-const IMG_SMALL = 'https://image.tmdb.org/t/p/w500';
+const API_KEY = "e950e51d5d49e85f7c2f17f01eb23ba3";
+const BASE_URL = "https://api.themoviedb.org/3";
+const IMG_BASE = "https://image.tmdb.org/t/p/original";
+const IMG_SMALL = "https://image.tmdb.org/t/p/w500";
 
-const LOCAL_UPLOADED_BG = '/mnt/data/856fff5a-28b0-4754-8909-d6b83a742878.png';
-
+const LOCAL_UPLOADED_BG = "/mnt/data/856fff5a-28b0-4754-8909-d6b83a742878.png";
 
 // -------------------------------------------------------------
 // API caching
 // -------------------------------------------------------------
 const apiCache = new Map();
 async function fetchWithCache(endpoint) {
-  const url = `${BASE_URL}${endpoint}${endpoint.includes('?') ? '&' : '?'}api_key=${API_KEY}`;
+  const url = `${BASE_URL}${endpoint}${endpoint.includes("?") ? "&" : "?"}api_key=${API_KEY}`;
   if (apiCache.has(url)) return apiCache.get(url);
 
   const res = await fetch(url);
-  if (!res.ok) throw new Error('Network error');
+  if (!res.ok) throw new Error("Network error");
 
   const data = await res.json();
   apiCache.set(url, data.results || []);
   return data.results || [];
 }
 
-
 // -------------------------------------------------------------
 // Utility Hook: Debounce
 // -------------------------------------------------------------
 function useDebouncedCallback(fn, delay) {
   const timer = useRef(null);
-  const callback = useCallback((...args) => {
-    if (timer.current) clearTimeout(timer.current);
-    timer.current = setTimeout(() => fn(...args), delay);
-  }, [fn, delay]);
+  const callback = useCallback(
+    (...args) => {
+      if (timer.current) clearTimeout(timer.current);
+      timer.current = setTimeout(() => fn(...args), delay);
+    },
+    [fn, delay],
+  );
 
   useEffect(() => () => clearTimeout(timer.current), []);
   return callback;
 }
 
-
 // -------------------------------------------------------------
 // LazyImage
 // -------------------------------------------------------------
-function LazyImage({ src, alt, className = '', style = {} }) {
+function LazyImage({ src, alt, className = "", style = {} }) {
   const ref = useRef();
   const [visible, setVisible] = useState(false);
 
@@ -58,14 +69,14 @@ function LazyImage({ src, alt, className = '', style = {} }) {
     const el = ref.current;
     if (!el) return;
 
-    if ('IntersectionObserver' in window) {
+    if ("IntersectionObserver" in window) {
       const io = new IntersectionObserver(
-        entries => {
-          entries.forEach(e => {
+        (entries) => {
+          entries.forEach((e) => {
             if (e.isIntersecting) setVisible(true);
           });
         },
-        { rootMargin: '200px' }
+        { rootMargin: "200px" },
       );
       io.observe(el);
       return () => io.disconnect();
@@ -79,7 +90,7 @@ function LazyImage({ src, alt, className = '', style = {} }) {
       {visible ? (
         <img
           src={src}
-          alt={alt || ''}
+          alt={alt || ""}
           loading="lazy"
           className="w-full h-full object-cover block"
         />
@@ -89,7 +100,6 @@ function LazyImage({ src, alt, className = '', style = {} }) {
     </div>
   );
 }
-
 
 function formatTitle(key) {
   const map = {
@@ -114,30 +124,31 @@ function formatTitle(key) {
   return map[key] || key;
 }
 
-
 // -------------------------------------------------------------
 // Main Component
 // -------------------------------------------------------------
 export default function NetflixCloneOptimized() {
-
-  const LS_MYLIST = 'nc_mylist_v1';
-  const LS_REMEMBER = 'nc_remember_v1';
+  const LS_MYLIST = "nc_mylist_v1";
+  const LS_REMEMBER = "nc_remember_v1";
 
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
-    const remember = localStorage.getItem(LS_REMEMBER) === 'true';
+    const remember = localStorage.getItem(LS_REMEMBER) === "true";
     if (remember) return true;
-    return sessionStorage.getItem('netflixLoggedIn') === 'true';
+    return sessionStorage.getItem("netflixLoggedIn") === "true";
   });
 
-  const [currentPage, setCurrentPage] = useState('home');
+  const [currentPage, setCurrentPage] = useState("home");
   const [featured, setFeatured] = useState(null);
   const [categories, setCategories] = useState({});
   const [myList, setMyList] = useState(() => {
-    try { return JSON.parse(localStorage.getItem(LS_MYLIST)) || []; }
-    catch { return []; }
+    try {
+      return JSON.parse(localStorage.getItem(LS_MYLIST)) || [];
+    } catch {
+      return [];
+    }
   });
 
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [scrolled, setScrolled] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -159,13 +170,16 @@ export default function NetflixCloneOptimized() {
 
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 50);
-    window.addEventListener('scroll', handler);
-    return () => window.removeEventListener('scroll', handler);
+    window.addEventListener("scroll", handler);
+    return () => window.removeEventListener("scroll", handler);
   }, []);
 
   useEffect(() => {
-    if (isLoggedIn) loadPage(currentPage);
-  }, [isLoggedIn, currentPage]);
+    if (isLoggedIn) {
+      loadPage(currentPage);
+    }
+  // eslint-disable-next-line no-use-before-define
+  }, [isLoggedIn, currentPage, loadPage]);
 
   useEffect(() => {
     localStorage.setItem(LS_MYLIST, JSON.stringify(myList));
@@ -178,55 +192,62 @@ export default function NetflixCloneOptimized() {
 
       if (page === "home") {
         categoryData = {
-          trending: await fetchWithCache('/trending/all/week'),
-          topRated: await fetchWithCache('/movie/top_rated'),
-          netflixOriginals: await fetchWithCache('/discover/tv?with_networks=213'),
-          action: await fetchWithCache('/discover/movie?with_genres=28'),
-          comedy: await fetchWithCache('/discover/movie?with_genres=35'),
+          trending: await fetchWithCache("/trending/all/week"),
+          topRated: await fetchWithCache("/movie/top_rated"),
+          netflixOriginals: await fetchWithCache(
+            "/discover/tv?with_networks=213",
+          ),
+          action: await fetchWithCache("/discover/movie?with_genres=28"),
+          comedy: await fetchWithCache("/discover/movie?with_genres=35"),
         };
       }
-      if (page === 'tvshows') {
+      if (page === "tvshows") {
         categoryData = {
-          trendingTV: await fetchWithCache('/trending/tv/week'),
-          popularTV: await fetchWithCache('/tv/popular'),
-          topRatedTV: await fetchWithCache('/tv/top_rated'),
+          trendingTV: await fetchWithCache("/trending/tv/week"),
+          popularTV: await fetchWithCache("/tv/popular"),
+          topRatedTV: await fetchWithCache("/tv/top_rated"),
         };
       }
-      if (page === 'movies') {
+      if (page === "movies") {
         categoryData = {
-          trendingMovies: await fetchWithCache('/trending/movie/week'),
-          popularMovies: await fetchWithCache('/movie/popular'),
-          topRatedMovies: await fetchWithCache('/movie/top_rated'),
+          trendingMovies: await fetchWithCache("/trending/movie/week"),
+          popularMovies: await fetchWithCache("/movie/popular"),
+          topRatedMovies: await fetchWithCache("/movie/top_rated"),
         };
       }
-      if (page === 'newpopular') {
+      if (page === "newpopular") {
         categoryData = {
-          trending: await fetchWithCache('/trending/all/day'),
-          upcoming: await fetchWithCache('/movie/upcoming'),
+          trending: await fetchWithCache("/trending/all/day"),
+          upcoming: await fetchWithCache("/movie/upcoming"),
         };
       }
-      if (page === 'languages') {
+      if (page === "languages") {
         categoryData = {
-          korean: await fetchWithCache('/discover/movie?with_original_language=ko'),
-          hindi: await fetchWithCache('/discover/movie?with_original_language=hi'),
+          korean: await fetchWithCache(
+            "/discover/movie?with_original_language=ko",
+          ),
+          hindi: await fetchWithCache(
+            "/discover/movie?with_original_language=hi",
+          ),
         };
       }
 
       const normalize = (arr) =>
-        arr.map(i => ({
+        arr.map((i) => ({
           ...i,
           poster_path: i.poster_path ? `${IMG_SMALL}${i.poster_path}` : null,
-          backdrop_path: i.backdrop_path ? `${IMG_BASE}${i.backdrop_path}` : null
+          backdrop_path: i.backdrop_path
+            ? `${IMG_BASE}${i.backdrop_path}`
+            : null,
         }));
 
       const normalized = Object.fromEntries(
-        Object.entries(categoryData).map(([k, v]) => [k, normalize(v)])
+        Object.entries(categoryData).map(([k, v]) => [k, normalize(v)]),
       );
 
       setCategories(normalized);
       const all = Object.values(normalized).flat();
       setFeatured(all[Math.floor(Math.random() * all.length)] || null);
-
     } catch (e) {
       console.error("Load error:", e);
     }
@@ -236,31 +257,33 @@ export default function NetflixCloneOptimized() {
   const handleSearch = async (q) => {
     if (!q.trim()) return;
     setLoading(true);
-    const res = await fetchWithCache(`/search/multi?query=${encodeURIComponent(q)}`);
-    const normalized = res.map(i => ({
+    const res = await fetchWithCache(
+      `/search/multi?query=${encodeURIComponent(q)}`,
+    );
+    const normalized = res.map((i) => ({
       ...i,
       poster_path: i.poster_path ? `${IMG_SMALL}${i.poster_path}` : null,
-      backdrop_path: i.backdrop_path ? `${IMG_BASE}${i.backdrop_path}` : null
+      backdrop_path: i.backdrop_path ? `${IMG_BASE}${i.backdrop_path}` : null,
     }));
-    setSearchResults(normalized.filter(i => i.poster_path));
-    setCurrentPage('search');
+    setSearchResults(normalized.filter((i) => i.poster_path));
+    setCurrentPage("search");
     setLoading(false);
   };
 
   const debouncedSearch = useDebouncedCallback(handleSearch, 400);
 
   const toggleMyList = (item) => {
-    setMyList(prev => {
-      const exists = prev.find(i => i.id === item.id);
-      return exists ? prev.filter(i => i.id !== item.id) : [...prev, item];
+    setMyList((prev) => {
+      const exists = prev.find((i) => i.id === item.id);
+      return exists ? prev.filter((i) => i.id !== item.id) : [...prev, item];
     });
   };
 
-  const isInMyList = (id) => myList.some(i => i.id === id);
+  const isInMyList = (id) => myList.some((i) => i.id === id);
 
   const handleLogin = (remember) => {
-    if (remember) localStorage.setItem(LS_REMEMBER, 'true');
-    sessionStorage.setItem('netflixLoggedIn', 'true');
+    if (remember) localStorage.setItem(LS_REMEMBER, "true");
+    sessionStorage.setItem("netflixLoggedIn", "true");
     setIsLoggedIn(true);
   };
 
@@ -268,30 +291,32 @@ export default function NetflixCloneOptimized() {
 
   return (
     <div className="bg-black min-h-screen text-white relative">
-
       {/* HEADER */}
-      <header className={`fixed top-0 w-full z-50 transition-all duration-300 ${scrolled ? 'backdrop-blur-lg bg-black/70' : 'bg-gradient-to-b from-black/80 to-transparent'}`}>
+      <header
+        className={`fixed top-0 w-full z-50 transition-all duration-300 ${scrolled ? "backdrop-blur-lg bg-black/70" : "bg-gradient-to-b from-black/80 to-transparent"}`}
+      >
         <div className="max-w-7xl mx-auto px-6 py-3 flex justify-between items-center">
-
           <div className="flex items-center gap-8">
             <h1
-              onClick={() => setCurrentPage('home')}
+              onClick={() => setCurrentPage("home")}
               className="text-[#E50914] text-3xl font-extrabold cursor-pointer tracking-tight"
-            >NETFLIX</h1>
+            >
+              NETFLIX
+            </h1>
 
             <nav className="hidden md:flex gap-6 text-sm">
               {[
-                { label: 'Home', page: 'home' },
-                { label: 'TV Shows', page: 'tvshows' },
-                { label: 'Movies', page: 'movies' },
-                { label: 'New & Popular', page: 'newpopular' },
-                { label: 'My List', page: 'mylist' },
-                { label: 'Browse by Languages', page: 'languages' },
-              ].map(n => (
+                { label: "Home", page: "home" },
+                { label: "TV Shows", page: "tvshows" },
+                { label: "Movies", page: "movies" },
+                { label: "New & Popular", page: "newpopular" },
+                { label: "My List", page: "mylist" },
+                { label: "Browse by Languages", page: "languages" },
+              ].map((n) => (
                 <button
                   key={n.page}
                   onClick={() => setCurrentPage(n.page)}
-                  className={`transition ${currentPage === n.page ? 'text-white font-semibold' : 'text-neutral-300 hover:text-white'}`}
+                  className={`transition ${currentPage === n.page ? "text-white font-semibold" : "text-neutral-300 hover:text-white"}`}
                 >
                   {n.label}
                 </button>
@@ -308,7 +333,7 @@ export default function NetflixCloneOptimized() {
 
             <div className="relative">
               <div
-                onClick={() => setShowProfileMenu(v => !v)}
+                onClick={() => setShowProfileMenu((v) => !v)}
                 className="flex items-center gap-2 cursor-pointer"
               >
                 <img
@@ -316,7 +341,9 @@ export default function NetflixCloneOptimized() {
                   className="w-8 h-8 rounded"
                   alt="Profile"
                 />
-                <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${showProfileMenu ? 'rotate-180' : ''}`} />
+                <ChevronDown
+                  className={`w-4 h-4 transition-transform duration-200 ${showProfileMenu ? "rotate-180" : ""}`}
+                />
               </div>
 
               <AnimatePresence>
@@ -327,11 +354,19 @@ export default function NetflixCloneOptimized() {
                     exit={{ opacity: 0, y: -6 }}
                     className="absolute right-0 mt-3 w-48 bg-black border border-neutral-700 rounded-lg shadow-xl"
                   >
-                    <div className="px-4 py-2 hover:bg-white/10 cursor-pointer text-sm">Account</div>
-                    <div className="px-4 py-2 hover:bg-white/10 cursor-pointer text-sm">Settings</div>
+                    <div className="px-4 py-2 hover:bg-white/10 cursor-pointer text-sm">
+                      Account
+                    </div>
+                    <div className="px-4 py-2 hover:bg-white/10 cursor-pointer text-sm">
+                      Settings
+                    </div>
                     <div className="border-t border-neutral-700" />
                     <div
-                      onClick={() => { sessionStorage.clear(); localStorage.removeItem(LS_REMEMBER); setIsLoggedIn(false); }}
+                      onClick={() => {
+                        sessionStorage.clear();
+                        localStorage.removeItem(LS_REMEMBER);
+                        setIsLoggedIn(false);
+                      }}
                       className="px-4 py-2 hover:bg-white/10 cursor-pointer text-sm"
                     >
                       Sign Out
@@ -348,7 +383,7 @@ export default function NetflixCloneOptimized() {
           {showSearchBar && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
+              animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
               className="px-6 py-3 bg-black/95 border-b border-neutral-800 overflow-hidden"
             >
@@ -356,7 +391,7 @@ export default function NetflixCloneOptimized() {
                 <Search className="w-5 h-5 text-neutral-400 ml-3" />
                 <input
                   value={searchQuery}
-                  onChange={e => {
+                  onChange={(e) => {
                     setSearchQuery(e.target.value);
                     debouncedSearch(e.target.value);
                   }}
@@ -366,7 +401,7 @@ export default function NetflixCloneOptimized() {
                 />
                 <X
                   onClick={() => {
-                    setSearchQuery('');
+                    setSearchQuery("");
                     setSearchResults([]);
                     setShowSearchBar(false);
                   }}
@@ -380,7 +415,6 @@ export default function NetflixCloneOptimized() {
 
       {/* MAIN */}
       <main className="pt-[90px]">
-
         {loading && (
           <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[200]">
             <div className="w-16 h-16 border-4 border-neutral-700 border-t-[#E50914] rounded-full animate-spin" />
@@ -388,9 +422,7 @@ export default function NetflixCloneOptimized() {
         )}
 
         {/* HERO — unchanged, original behaviour */}
-        {featured && (
-          <HeroSection featured={featured} openModal={openModal} />
-        )}
+        {featured && <HeroSection featured={featured} openModal={openModal} />}
 
         {/* ROWS — cards open modal on hover */}
         <section className="relative -mt-24 space-y-12 px-6 md:px-12 pb-20">
@@ -407,13 +439,15 @@ export default function NetflixCloneOptimized() {
         </section>
 
         {/* SEARCH RESULTS */}
-        {currentPage === 'search' && (
+        {currentPage === "search" && (
           <section className="px-6 md:px-12 pb-20">
             <h2 className="text-xl md:text-2xl font-semibold mb-8">
-              {searchResults.length ? `Results for "${searchQuery}"` : `No results for "${searchQuery}"`}
+              {searchResults.length
+                ? `Results for "${searchQuery}"`
+                : `No results for "${searchQuery}"`}
             </h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-              {searchResults.map(item => (
+              {searchResults.map((item) => (
                 <MovieCard
                   key={item.id}
                   item={item}
@@ -427,7 +461,7 @@ export default function NetflixCloneOptimized() {
         )}
 
         {/* MY LIST */}
-        {currentPage === 'mylist' && (
+        {currentPage === "mylist" && (
           <section className="px-6 md:px-12 pb-20">
             <h2 className="text-3xl md:text-4xl font-bold mb-10">My List</h2>
             {myList.length === 0 ? (
@@ -435,12 +469,16 @@ export default function NetflixCloneOptimized() {
                 <div className="w-20 h-20 rounded-full bg-neutral-800 flex items-center justify-center mb-6">
                   <Plus className="w-10 h-10 text-neutral-500" />
                 </div>
-                <p className="text-neutral-400 text-lg font-medium">Your list is empty</p>
-                <p className="text-neutral-600 text-sm mt-2">Add movies and shows to keep track of what you want to watch.</p>
+                <p className="text-neutral-400 text-lg font-medium">
+                  Your list is empty
+                </p>
+                <p className="text-neutral-600 text-sm mt-2">
+                  Add movies and shows to keep track of what you want to watch.
+                </p>
               </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                {myList.map(item => (
+                {myList.map((item) => (
                   <MovieCard
                     key={item.id}
                     item={item}
@@ -453,7 +491,6 @@ export default function NetflixCloneOptimized() {
             )}
           </section>
         )}
-
       </main>
 
       {/* MODAL */}
@@ -468,29 +505,67 @@ export default function NetflixCloneOptimized() {
       {/* FOOTER */}
       <footer className="px-6 md:px-12 py-16 border-t border-neutral-800 bg-black">
         <div className="max-w-5xl mx-auto">
-
           <div className="flex gap-6 mb-8">
-            <a href="#" aria-label="Facebook" className="text-neutral-400 hover:text-white transition">
+            <a
+              href="https://www.facebook.com/netflix"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Netflix on Facebook"
+              className="text-neutral-400 hover:text-white transition"
+            >
               <Facebook className="w-5 h-5" />
             </a>
-            <a href="#" aria-label="Instagram" className="text-neutral-400 hover:text-white transition">
+
+            <a
+              href="https://www.instagram.com/netflix/"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Netflix on Instagram"
+              className="text-neutral-400 hover:text-white transition"
+            >
               <Instagram className="w-5 h-5" />
             </a>
-            <a href="#" aria-label="Twitter" className="text-neutral-400 hover:text-white transition">
+
+            <a
+              href="https://x.com/netflix"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Netflix on X"
+              className="text-neutral-400 hover:text-white transition"
+            >
               <Twitter className="w-5 h-5" />
             </a>
-            <a href="#" aria-label="YouTube" className="text-neutral-400 hover:text-white transition">
+
+            <a
+              href="https://www.youtube.com/@Netflix"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Netflix on YouTube"
+              className="text-neutral-400 hover:text-white transition"
+            >
               <Youtube className="w-5 h-5" />
             </a>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-y-4 gap-x-6 text-neutral-500 text-xs mb-10">
             {[
-              "Audio Description", "Help Centre", "Gift Cards", "Media Centre",
-              "Investor Relations", "Jobs", "Terms of Use", "Privacy",
-              "Legal Notices", "Cookie Preferences", "Corporate Information", "Contact Us",
-            ].map(link => (
-              <span key={link} className="hover:underline cursor-pointer hover:text-neutral-300 transition">
+              "Audio Description",
+              "Help Centre",
+              "Gift Cards",
+              "Media Centre",
+              "Investor Relations",
+              "Jobs",
+              "Terms of Use",
+              "Privacy",
+              "Legal Notices",
+              "Cookie Preferences",
+              "Corporate Information",
+              "Contact Us",
+            ].map((link) => (
+              <span
+                key={link}
+                className="hover:underline cursor-pointer hover:text-neutral-300 transition"
+              >
                 {link}
               </span>
             ))}
@@ -501,15 +576,15 @@ export default function NetflixCloneOptimized() {
           </button>
 
           <p className="text-neutral-600 text-xs">
-            © {new Date().getFullYear()} Netflix Clone. This is a fan-made project for educational purposes only. Not affiliated with Netflix, Inc.
+            © {new Date().getFullYear()} Netflix Clone. This is a fan-made
+            project for educational purposes only. Not affiliated with Netflix,
+            Inc.
           </p>
         </div>
       </footer>
-
     </div>
   );
 }
-
 
 // -------------------------------------------------------------
 // HERO SECTION — original, unchanged
@@ -525,7 +600,7 @@ function HeroSection({ featured, openModal }) {
     >
       <img
         src={featured.backdrop_path}
-        className={`absolute inset-0 w-full h-full object-cover transition-transform duration-700 ${hovered ? 'scale-105' : 'scale-100'}`}
+        className={`absolute inset-0 w-full h-full object-cover transition-transform duration-700 ${hovered ? "scale-105" : "scale-100"}`}
         alt=""
       />
 
@@ -541,7 +616,6 @@ function HeroSection({ featured, openModal }) {
             transition={{ duration: 0.3 }}
           >
             <div className="text-center max-w-2xl px-8 space-y-4">
-
               <motion.span
                 className="inline-block bg-[#E50914] text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-widest"
                 initial={{ y: -12, opacity: 0 }}
@@ -569,23 +643,31 @@ function HeroSection({ featured, openModal }) {
                 <span className="text-green-400 font-bold text-base">
                   {Math.round((featured.vote_average || 0) * 10)}% Match
                 </span>
-                <span>{(featured.release_date || featured.first_air_date || '').slice(0, 4)}</span>
-                <span className="border border-neutral-500 px-2 py-0.5 rounded text-xs">HD</span>
+                <span>
+                  {(
+                    featured.release_date ||
+                    featured.first_air_date ||
+                    ""
+                  ).slice(0, 4)}
+                </span>
+                <span className="border border-neutral-500 px-2 py-0.5 rounded text-xs">
+                  HD
+                </span>
               </motion.div>
 
               <motion.p
                 className="text-neutral-300 text-sm md:text-base leading-relaxed"
                 style={{
-                  display: '-webkit-box',
+                  display: "-webkit-box",
                   WebkitLineClamp: 3,
-                  WebkitBoxOrient: 'vertical',
-                  overflow: 'hidden',
+                  WebkitBoxOrient: "vertical",
+                  overflow: "hidden",
                 }}
                 initial={{ y: 12, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.2 }}
               >
-                {featured.overview || 'No description available.'}
+                {featured.overview || "No description available."}
               </motion.p>
 
               <motion.div
@@ -598,7 +680,10 @@ function HeroSection({ featured, openModal }) {
                   <Play className="w-5 h-5 fill-black" /> Play
                 </button>
                 <button
-                  onClick={(e) => { e.stopPropagation(); openModal(featured); }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openModal(featured);
+                  }}
                   className="flex items-center gap-2 bg-white/20 text-white px-6 py-3 rounded-md border border-white/30 hover:bg-white/30 transition text-sm"
                 >
                   <Info className="w-5 h-5" /> More Info
@@ -622,7 +707,7 @@ function HeroSection({ featured, openModal }) {
               {featured.title || featured.name}
             </h1>
             <p className="mt-4 text-neutral-300 text-sm md:text-lg">
-              {(featured.overview || '').slice(0, 220)}...
+              {(featured.overview || "").slice(0, 220)}...
             </p>
             <div className="mt-6 flex justify-center gap-4">
               <button className="flex items-center gap-2 bg-white text-black px-6 py-3 rounded-md font-semibold hover:bg-neutral-200 transition">
@@ -641,7 +726,6 @@ function HeroSection({ featured, openModal }) {
     </section>
   );
 }
-
 
 // -------------------------------------------------------------
 // HOVERABLE CARD — used inside MovieRow
@@ -677,7 +761,9 @@ function HoverCard({ item, onToggleList, isInList, openModal }) {
       {/* Poster image with scale + ring on hover */}
       <div
         className={`w-full h-[210px] md:h-[320px] rounded-lg overflow-hidden cursor-pointer transition-all duration-300 ${
-          hovered ? 'scale-105 ring-2 ring-white/70 shadow-2xl shadow-black/60' : 'scale-100'
+          hovered
+            ? "scale-105 ring-2 ring-white/70 shadow-2xl shadow-black/60"
+            : "scale-100"
         }`}
         onClick={() => openModal(item)}
       >
@@ -708,7 +794,7 @@ function HoverCard({ item, onToggleList, isInList, openModal }) {
       <h4
         onClick={() => openModal(item)}
         className={`mt-2 text-sm md:text-base font-semibold truncate cursor-pointer transition ${
-          hovered ? 'text-red-400' : 'hover:text-red-400'
+          hovered ? "text-red-400" : "hover:text-red-400"
         }`}
       >
         {item.title || item.name}
@@ -716,16 +802,22 @@ function HoverCard({ item, onToggleList, isInList, openModal }) {
 
       {/* Add / Remove button */}
       <button
-        onClick={(e) => { e.stopPropagation(); onToggleList(item); }}
+        onClick={(e) => {
+          e.stopPropagation();
+          onToggleList(item);
+        }}
         className="mt-2 bg-white text-black p-2 rounded-full hover:bg-neutral-200 transition"
         title={isInList ? "Remove from My List" : "Add to My List"}
       >
-        {isInList ? <Check className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+        {isInList ? (
+          <Check className="w-4 h-4" />
+        ) : (
+          <Plus className="w-4 h-4" />
+        )}
       </button>
     </div>
   );
 }
-
 
 // -------------------------------------------------------------
 // MOVIE ROW — uses HoverCard so each card auto-opens on hover
@@ -745,8 +837,9 @@ function MovieRow({ title, items, onToggleList, isInMyList, openModal }) {
   useEffect(() => updateControls(), [items]);
 
   const scroll = (dir) => {
-    const amount = dir === 'left' ? -window.innerWidth * 0.5 : window.innerWidth * 0.5;
-    scrollRef.current.scrollBy({ left: amount, behavior: 'smooth' });
+    const amount =
+      dir === "left" ? -window.innerWidth * 0.5 : window.innerWidth * 0.5;
+    scrollRef.current.scrollBy({ left: amount, behavior: "smooth" });
     setTimeout(updateControls, 300);
   };
 
@@ -756,7 +849,7 @@ function MovieRow({ title, items, onToggleList, isInMyList, openModal }) {
 
       {showLeft && (
         <button
-          onClick={() => scroll('left')}
+          onClick={() => scroll("left")}
           className="absolute left-0 top-1/2 -translate-y-1/2 z-40 bg-black/50 hover:bg-black/80 w-10 h-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition rounded-r"
         >
           <ChevronLeft className="w-6 h-6" />
@@ -768,7 +861,7 @@ function MovieRow({ title, items, onToggleList, isInMyList, openModal }) {
         onScroll={updateControls}
         className="flex gap-4 overflow-x-auto scroll-smooth no-scrollbar py-2"
       >
-        {items.map(item => (
+        {items.map((item) => (
           <HoverCard
             key={item.id}
             item={item}
@@ -781,7 +874,7 @@ function MovieRow({ title, items, onToggleList, isInMyList, openModal }) {
 
       {showRight && (
         <button
-          onClick={() => scroll('right')}
+          onClick={() => scroll("right")}
           className="absolute right-0 top-1/2 -translate-y-1/2 z-40 bg-black/50 hover:bg-black/80 w-10 h-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition rounded-l"
         >
           <ChevronRight className="w-6 h-6" />
@@ -790,7 +883,6 @@ function MovieRow({ title, items, onToggleList, isInMyList, openModal }) {
     </div>
   );
 }
-
 
 // -------------------------------------------------------------
 // GRID MOVIE CARD — used in Search & My List
@@ -825,7 +917,9 @@ function MovieCard({ item, onToggleList, isInList, openModal }) {
     >
       <div
         className={`w-full h-[300px] rounded-lg overflow-hidden cursor-pointer transition-all duration-300 ${
-          hovered ? 'scale-105 ring-2 ring-white/70 shadow-2xl shadow-black/60' : 'scale-100'
+          hovered
+            ? "scale-105 ring-2 ring-white/70 shadow-2xl shadow-black/60"
+            : "scale-100"
         }`}
         onClick={() => openModal(item)}
       >
@@ -854,39 +948,48 @@ function MovieCard({ item, onToggleList, isInList, openModal }) {
       <h4
         onClick={() => openModal(item)}
         className={`mt-2 font-semibold text-sm cursor-pointer transition ${
-          hovered ? 'text-red-400' : 'hover:text-red-400'
+          hovered ? "text-red-400" : "hover:text-red-400"
         }`}
       >
         {item.title || item.name}
       </h4>
 
       <button
-        onClick={(e) => { e.stopPropagation(); onToggleList(item); }}
+        onClick={(e) => {
+          e.stopPropagation();
+          onToggleList(item);
+        }}
         className="absolute bottom-10 right-2 bg-white p-2 rounded-full shadow hover:bg-neutral-200 transition"
         title={isInList ? "Remove from My List" : "Add to My List"}
       >
-        {isInList ? <Check className="text-black w-4 h-4" /> : <Plus className="text-black w-4 h-4" />}
+        {isInList ? (
+          <Check className="text-black w-4 h-4" />
+        ) : (
+          <Plus className="text-black w-4 h-4" />
+        )}
       </button>
     </div>
   );
 }
 
-
 // -------------------------------------------------------------
 // MOVIE MODAL
 // -------------------------------------------------------------
 function MovieModal({ show, movie, closeModal, toggleMyList, isInMyList }) {
-
   useEffect(() => {
     if (!show) return;
-    const handler = (e) => { if (e.key === 'Escape') closeModal(); };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
+    const handler = (e) => {
+      if (e.key === "Escape") closeModal();
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
   }, [show, closeModal]);
 
   useEffect(() => {
-    document.body.style.overflow = show ? 'hidden' : '';
-    return () => { document.body.style.overflow = ''; };
+    document.body.style.overflow = show ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
   }, [show]);
 
   if (!show || !movie) return null;
@@ -905,7 +1008,7 @@ function MovieModal({ show, movie, closeModal, toggleMyList, isInMyList }) {
           initial={{ scale: 0.85, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.85, opacity: 0 }}
-          transition={{ duration: 0.25, ease: 'easeOut' }}
+          transition={{ duration: 0.25, ease: "easeOut" }}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Banner */}
@@ -934,15 +1037,16 @@ function MovieModal({ show, movie, closeModal, toggleMyList, isInMyList }) {
 
           {/* Details */}
           <div className="p-6 space-y-5">
-
             <div className="flex items-center gap-4 flex-wrap text-sm">
               <span className="text-green-400 font-bold text-base">
                 {Math.round((movie.vote_average || 0) * 10)}% Match
               </span>
               <span className="text-neutral-400">
-                {(movie.release_date || movie.first_air_date || '').slice(0, 4)}
+                {(movie.release_date || movie.first_air_date || "").slice(0, 4)}
               </span>
-              <span className="border border-neutral-600 px-2 py-0.5 rounded text-xs text-neutral-400">HD</span>
+              <span className="border border-neutral-600 px-2 py-0.5 rounded text-xs text-neutral-400">
+                HD
+              </span>
               {movie.media_type && (
                 <span className="border border-neutral-600 px-2 py-0.5 rounded text-xs text-neutral-400 capitalize">
                   {movie.media_type}
@@ -957,7 +1061,9 @@ function MovieModal({ show, movie, closeModal, toggleMyList, isInMyList }) {
             {movie.vote_average > 0 && (
               <div className="flex items-center gap-2 text-xs text-neutral-500">
                 <span>⭐ {movie.vote_average?.toFixed(1)} / 10</span>
-                {movie.vote_count && <span>({movie.vote_count.toLocaleString()} votes)</span>}
+                {movie.vote_count && (
+                  <span>({movie.vote_count.toLocaleString()} votes)</span>
+                )}
               </div>
             )}
 
@@ -970,17 +1076,21 @@ function MovieModal({ show, movie, closeModal, toggleMyList, isInMyList }) {
                 onClick={() => toggleMyList(movie)}
                 className={`flex items-center gap-2 px-6 py-2.5 rounded-md font-semibold border transition text-sm ${
                   isInMyList(movie.id)
-                    ? 'bg-white/10 border-white/30 text-white hover:bg-white/20'
-                    : 'bg-transparent border-white/30 text-white hover:bg-white/10'
+                    ? "bg-white/10 border-white/30 text-white hover:bg-white/20"
+                    : "bg-transparent border-white/30 text-white hover:bg-white/10"
                 }`}
               >
-                {isInMyList(movie.id)
-                  ? <><Check className="w-4 h-4" /> In My List</>
-                  : <><Plus className="w-4 h-4" /> My List</>
-                }
+                {isInMyList(movie.id) ? (
+                  <>
+                    <Check className="w-4 h-4" /> In My List
+                  </>
+                ) : (
+                  <>
+                    <Plus className="w-4 h-4" /> My List
+                  </>
+                )}
               </button>
             </div>
-
           </div>
         </motion.div>
       </motion.div>
@@ -988,23 +1098,27 @@ function MovieModal({ show, movie, closeModal, toggleMyList, isInMyList }) {
   );
 }
 
-
 // -------------------------------------------------------------
 // AUTH SCREEN
 // -------------------------------------------------------------
 function AuthScreen({ onLogin }) {
-  const [email, setEmail] = useState('');
-  const [pass, setPass] = useState('');
+  const [email, setEmail] = useState("");
+  const [pass, setPass] = useState("");
   const [remember, setRemember] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   const submit = () => {
-    if (!email || !pass) { setError('Please enter your email and password.'); return; }
-    setError('');
+    if (!email || !pass) {
+      setError("Please enter your email and password.");
+      return;
+    }
+    setError("");
     onLogin(remember);
   };
 
-  const handleKeyDown = (e) => { if (e.key === 'Enter') submit(); };
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") submit();
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-black text-white relative">
@@ -1016,7 +1130,9 @@ function AuthScreen({ onLogin }) {
       <div className="absolute inset-0 bg-black/60" />
 
       <div className="relative bg-black/75 backdrop-blur-sm p-10 rounded-xl w-full max-w-md shadow-2xl border border-white/10">
-        <h1 className="text-[#E50914] text-3xl font-extrabold mb-2 tracking-tight">NETFLIX</h1>
+        <h1 className="text-[#E50914] text-3xl font-extrabold mb-2 tracking-tight">
+          NETFLIX
+        </h1>
         <h2 className="text-2xl font-bold mb-6">Sign In</h2>
 
         {error && (
@@ -1031,7 +1147,7 @@ function AuthScreen({ onLogin }) {
             className="w-full px-4 py-3 bg-neutral-800 rounded border border-transparent focus:border-[#E50914] transition text-sm outline-none"
             placeholder="Email or phone number"
             value={email}
-            onChange={e => setEmail(e.target.value)}
+            onChange={(e) => setEmail(e.target.value)}
             onKeyDown={handleKeyDown}
           />
           <input
@@ -1039,7 +1155,7 @@ function AuthScreen({ onLogin }) {
             className="w-full px-4 py-3 bg-neutral-800 rounded border border-transparent focus:border-[#E50914] transition text-sm outline-none"
             placeholder="Password"
             value={pass}
-            onChange={e => setPass(e.target.value)}
+            onChange={(e) => setPass(e.target.value)}
             onKeyDown={handleKeyDown}
           />
           <button
@@ -1055,7 +1171,7 @@ function AuthScreen({ onLogin }) {
             <input
               type="checkbox"
               checked={remember}
-              onChange={e => setRemember(e.target.checked)}
+              onChange={(e) => setRemember(e.target.checked)}
               className="accent-[#E50914]"
             />
             <span>Remember me</span>
@@ -1064,8 +1180,10 @@ function AuthScreen({ onLogin }) {
         </div>
 
         <div className="mt-8 text-neutral-500 text-sm">
-          New to Netflix?{' '}
-          <span className="text-white cursor-pointer hover:underline">Sign up now.</span>
+          New to Netflix?{" "}
+          <span className="text-white cursor-pointer hover:underline">
+            Sign up now.
+          </span>
         </div>
 
         <p className="mt-4 text-xs text-neutral-600">
